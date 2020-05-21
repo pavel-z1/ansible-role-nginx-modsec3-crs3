@@ -9,6 +9,7 @@
     depth: 1
     version: "v3/master"
     force: yes
+  changed_when: false
 
 - name: Init submodules, configure, build, make install
   command: "{{ item }}"
@@ -46,6 +47,13 @@
     dest: "~/Nginx"
     remote_src: yes
 
+- name: Check that the objs/ngx_http_modsecurity_module.so exists
+  stat:
+    path: "~/Nginx/nginx-{{ nginx_modsec3_crs3_nginx_version }}/objs/ngx_http_modsecurity_module.so"
+  register: modsec_module_file
+  tags:
+    - zabbix-server
+
 - name: Configure and make ModSecurity3 for Nginx module
   command: "{{ item }}"
   args:
@@ -54,6 +62,7 @@
   with_items:
     - "./configure --with-compat --add-dynamic-module=../../ModSecurity-nginx"
     - "make modules"
+  when: not modsec_module_file.stat.exists
 
 - name: import nginx role Debian/Ubuntu vars
   include_vars:
@@ -93,6 +102,7 @@
     src: "~/ModSecurity/modsecurity.conf-recommended"
     dest: "{{ nginx_conf_dir }}/modsec/modsecurity.conf"
     remote_src: yes
+  changed_when: false
 
 - name: Copy unicode.mapping file also
   copy:
@@ -105,6 +115,7 @@
     path: "{{ nginx_conf_dir }}/modsec/modsecurity.conf"
     regexp: "SecRuleEngine DetectionOnly"
     replace: "SecRuleEngine On"
+  changed_when: false
 
 - name: Create a main.conf from template
   template:
