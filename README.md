@@ -1,4 +1,5 @@
-# Ansible role for Installing Nginx, compiling ModSecurity3, and installing the OWASP CRS v3 ruleset 
+# Ansible role for compiling ModSecurity3, and installing the OWASP CRS v3 ruleset 
+# Can be used with official Nginx role ansible-role-nginx-modsec3-crs3
 
 ModSecurity3 is a powerful open source cross-platform web application firewall (WAF).
 
@@ -16,37 +17,12 @@ There are a number of libraries and packages which ModSecurity3 depends on and w
 
 This role will additionally install any compilers and other build tools required for compilation. It will then remove these tools if they were not previously installed. 
 
-Nginx support is primarily provided by the dependent role `ansible-role-nginx` by jdauphant.
-
-https://github.com/jdauphant/ansible-role-nginx
-
-By default this role will install Nginx packages from OS provided repos, this is recommended to be changed to installing from the official Nginx repo instead.
-
-This can be done by setting this variable:
-
-```    nginx_official_repo: True```
+This role will no install Nginx packages.
 
 ## Requirements
 
-Before running a playbook which calls this role:
-
-Install any required [Ansible](https://www.ansible.com) roles from `requirements.yml` View [here](requirements.yml).
-
-```bash
-ansible-galaxy install -r requirements.yml
-```
-
-n.b in particular this role will call certain tasks from the nginx role so be sure to have it installed in the same location as this role and with a specific name of "ansible-role-nginx".
-
-i.e this in the requirements.yml file for your project's playbook (not the requirements.yml file for this role) you will need to include both this role and the role mentioned above like this:
-
-```yml
-- src: perryk.nginx_modsec3_crs3
-
-- src: https://github.com/jdauphant/ansible-role-nginx
-  version: master
-```
-
+You must already have Nginx server installed
+This role will determine  Nginx installed version and will compile ModSecurity based on your Nginx version
 
 ## Role Variables
 
@@ -60,30 +36,61 @@ There are lots of variables however in the nginx role, perhaps the best explanat
 ## Example Playbook
 
 Example playbook calling the role adding and enabling ModSecurity for the default Nginx site.
+In this example, vars used to configure Nginx server with official role https://github.com/nginxinc/ansible-role-nginx
 
 ```yaml
 - hosts: servers
 
   vars:
+    nginx_main_template_enable: true
+    nginx_main_template:
+      template_file: nginx.conf.j2
+      conf_file_name: nginx.conf
+      conf_file_location: /etc/nginx/
+      user: nginx
+      worker_processes: auto
+      ...
+      custom_options:
+        - load_module modules/ngx_http_modsecurity_module.so
 
-    nginx_pkgs:
-      - nginx
-    nginx_install_epel_repo: False
-    nginx_official_repo: True
-    nginx_official_repo_mainline: True
-    nginx_module_configs:
-      - ngx_http_modsecurity_module
-    nginx_sites:
+
+    nginx_http_template_enable: true
+    nginx_http_template:
       default:
-       - listen 80
-       - server_name _
-       - "Modsecurity on"
-       - "modsecurity_rules_file /etc/nginx/modsec/main.conf"
-       - root "/usr/share/nginx/html"
-       - index index.html
+        template_file: http/default.conf.j2
+        conf_file_name: "config_name.conf"
+        conf_file_location: /etc/nginx/conf.d/
+        servers:
+          zabbix_dashboard_https:
+            listen:
+              listen_localhost:
+                port: 80
+                opts:
+                  - default_server
+            server_name: "{{ ansible_fqdn }} zabbix.observe.kwebbl.cloud www.zabbix.observe.kwebbl.cloud"
+            error_page: /usr/share/nginx/html
+            autoindex: false
+            root: /usr/share/zabbix
+            custom_options:
+              - modsecurity on
+              - modsecurity_rules_file /etc/nginx/modsec/main.conf
 
   roles:
-    - perryk.nginx-modsec3-crs3
+    - ansible-role-nginx-modsec3-crs3
+```
+
+Key options in this example:
+For Nginx Main config:
+```
+  custom_options:
+    - load_module modules/ngx_http_modsecurity_module.so
+```
+
+For Nginx Server/Vhost config:
+```
+  custom_options:
+    - modsecurity on
+    - modsecurity_rules_file /etc/nginx/modsec/main.conf
 ```
 
 # License
