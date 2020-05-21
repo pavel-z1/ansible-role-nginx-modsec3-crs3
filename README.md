@@ -1,5 +1,5 @@
 # Ansible role for compiling ModSecurity3, and installing the OWASP CRS v3 ruleset 
-## Can be used with official Nginx role ansible-role-nginx-modsec3-crs3
+### Can be used with official Nginx role https://github.com/nginxinc/ansible-role-nginx
 
 ModSecurity3 is a powerful open source cross-platform web application firewall (WAF).
 
