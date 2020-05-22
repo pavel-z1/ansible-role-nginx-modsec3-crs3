@@ -102,6 +102,8 @@
     src: "~/ModSecurity/modsecurity.conf-recommended"
     dest: "{{ nginx_conf_dir }}/modsec/modsecurity.conf"
     remote_src: yes
+  notify:
+    - "(Handler: All OSs) Reload NGINX"
   changed_when: false
 
 - name: Copy unicode.mapping file also
@@ -109,28 +111,38 @@
     src: "~/ModSecurity/unicode.mapping"
     dest: "{{ nginx_conf_dir }}/modsec/unicode.mapping"
     remote_src: yes
+  notify:
+    - "(Handler: All OSs) Reload NGINX"
 
 - name: Activate blocking rather than detection only
   replace:
     path: "{{ nginx_conf_dir }}/modsec/modsecurity.conf"
     regexp: "SecRuleEngine DetectionOnly"
     replace: "SecRuleEngine On"
+  notify:
+    - "(Handler: All OSs) Reload NGINX"
   changed_when: false
 
 - name: Create a main.conf from template
   template:
     src: main.conf.j2
     dest: "{{ nginx_conf_dir }}/modsec/main.conf"
+  notify:
+    - "(Handler: All OSs) Reload NGINX"
 
 - name: Obtain OWASP Modsecurity Rules
   git:
     repo: "https://github.com/SpiderLabs/owasp-modsecurity-crs"
     dest: "{{ nginx_conf_dir }}/modsec/owasp-modsecurity-crs"
     version: "v3.2/dev"
+  notify:
+    - "(Handler: All OSs) Reload NGINX"
 
 - name: Copy crs-setup.conf.example to become crs-setup.conf
   copy:
     src: "{{ nginx_conf_dir }}/modsec/owasp-modsecurity-crs/crs-setup.conf.example"
     dest: "{{ nginx_conf_dir }}/modsec/owasp-modsecurity-crs/crs-setup.conf"
     remote_src: yes
+  notify:
+    - "(Handler: All OSs) Reload NGINX"
 

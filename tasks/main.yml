@@ -95,3 +95,11 @@
     name: "{{ installed.stdout_lines }}"
     state: absent
   when: installed is defined and (nginx_modsec3_crs3_keep is undefined or not nginx_modsec3_crs3_keep)
+
+- name: "(Handler: All OSs) Start NGINX"
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+  when:
+    - modsec3_crs3_nginx_start | bool

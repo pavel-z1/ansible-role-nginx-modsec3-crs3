@@ -1,2 +1,17 @@
 ---
-# handlers file for ansible-role-nginx-modsec3-crs3
+- name: "(Handler: All OSs) Run NGINX"
+  block:
+
+    - name: "(Handler: All OSs) Start NGINX"
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: "(Handler: All OSs) Reload NGINX"
+      service:
+        name: nginx
+        state: reloaded
+
+  when:
+    - modsec3_crs3_nginx_start | bool
